@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmallBiz Job Profit &amp; Pricing Calculator</title>
+    <meta
+      name="description"
+      content="Local-first job cost estimator, margin pricing calculator, actual-vs-estimate profit tracker, and customer quote builder for small service businesses."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles/tokens.css" />
+    <link rel="stylesheet" href="./styles/app.css" />
+    <link rel="stylesheet" href="./styles/print.css" media="print" />
+  </head>
+  <body>
+    <!-- Top Application Header -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <line x1="8" y1="7" x2="16" y2="7" />
+              <line x1="8" y1="11" x2="10" y2="11" />
+              <line x1="14" y1="11" x2="16" y2="11" />
+              <line x1="8" y1="15" x2="10" y2="15" />
+              <line x1="14" y1="15" x2="16" y2="15" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-eyebrow">SmallBiz Toolkit</span>
+            <h1 class="brand-title">Job Profit &amp; Pricing Calculator</h1>
+          </div>
+        </div>
+
+        <nav class="primary-nav" role="tablist" aria-label="Calculator sections">
+          <button
+            id="tab-quote"
+            class="nav-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="view-quote"
+            data-view="quote"
+          >
+            Price a Job
+          </button>
+          <button
+            id="tab-actuals"
+            class="nav-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="view-actuals"
+            data-view="actuals"
+          >
+            Record Actuals
+          </button>
+          <button
+            id="tab-log"
+            class="nav-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="view-log"
+            data-view="log"
+          >
+            Job Log
+            <span id="nav-log-count" class="nav-badge tabular">0</span>
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button id="btn-open-guide" class="header-btn" type="button">
+            Quick Start
+          </button>
+          <button id="btn-open-settings" class="header-btn" type="button">
+            Settings
+          </button>
+          <span class="header-divider" aria-hidden="true"></span>
+          <div id="auth-guest-controls" class="header-auth-group">
+            <button id="btn-header-signin" class="header-btn" type="button">
+              Log In
+            </button>
+            <button id="btn-header-signup" class="header-btn header-btn-accent" type="button">
+              Free Account
+            </button>
+          </div>
+          <div id="auth-user-controls" class="header-auth-group" hidden>
+            <button
+              id="btn-header-plan"
+              class="plan-pill tabular"
+              type="button"
+              title="View plan & monthly quote allowance"
+            >
+              Free · 2/2 left
+            </button>
+            <span id="header-user-email" class="header-user-email"></span>
+            <button id="btn-header-signout" class="header-btn" type="button">
+              Log Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Guest / Demo Data Banner -->
+    <div id="demo-banner" class="demo-banner" hidden>
+      <div class="demo-banner-inner">
+        <p class="demo-banner-text">
+          <strong>Guest preview with sample jobs</strong> — create a free account to save up to <span class="js-free-limit">2</span> quotes/month in your own private workspace.
+        </p>
+        <div class="demo-banner-actions">
+          <button id="btn-banner-signup" class="btn btn-primary btn-sm" type="button">
+            Create Free Account
+          </button>
+          <button id="btn-clear-demo" class="btn btn-secondary btn-sm" type="button">
+            Clear Demo Data
+          </button>
+          <button id="btn-dismiss-demo" class="btn btn-ghost btn-sm" type="button">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- ==================== VIEW 1: PRICE A JOB ==================== -->
+      <section id="view-quote" class="view-panel" role="tabpanel" aria-labelledby="tab-quote">
+        <div class="view-header">
+          <div class="view-heading-group">
+            <span class="view-step">Step 1 · Estimate &amp; Quote</span>
+            <h2 class="view-title">Price a Job</h2>
+            <p class="view-subtitle">
+              Enter your expected time and job costs to calculate a profitable selling price.
+            </p>
+          </div>
+          <div class="view-toolbar">
+            <button id="btn-new-quote" class="btn btn-secondary" type="button">
+              + New Quote
+            </button>
+            <button id="btn-duplicate-quote" class="btn btn-ghost" type="button" hidden>
+              Duplicate
+            </button>
+          </div>
+        </div>
+
+        <div class="job-selector-bar">
+          <label for="quote-job-select">Active Quote:</label>
+          <select id="quote-job-select" class="select"></select>
+          <span id="quote-lifecycle-badge" class="status-badge quoted">New draft</span>
+        </div>
+
+        <div class="workspace-grid">
+          <!-- Left: Quote Input Form -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Job Details &amp; Estimated Costs</h3>
+              <span id="quote-assumptions-summary" class="field-hint tabular"></span>
+            </div>
+            <div class="card-body">
+              <div id="quote-validation-alert" class="validation-alert" role="alert" hidden>
+                Values cannot be negative. Enter 0 or a positive number for highlighted fields.
+              </div>
+              <form id="quote-form" novalidate>
+                <div class="form-section">
+                  <h4 class="form-section-title">Job Info</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="q-customer">Job / customer</label>
+                      <input
+                        id="q-customer"
+                        class="input"
+                        type="text"
+                        placeholder="e.g., Smith driveway"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="field">
+                      <label for="q-service">Service type</label>
+                      <input
+                        id="q-service"
+                        class="input"
+                        type="text"
+                        list="service-suggestions"
+                        placeholder="e.g., Pressure washing"
+                        autocomplete="off"
+                      />
+                      <datalist id="service-suggestions">
+                        <option value="Pressure washing"></option>
+                        <option value="Window cleaning"></option>
+                        <option value="Gutter cleaning"></option>
+                        <option value="House cleaning"></option>
+                        <option value="Landscaping"></option>
+                        <option value="Handyman repair"></option>
+                      </datalist>
+                    </div>
+                    <div class="field field-full">
+                      <label for="q-price">Quoted selling price (excl. tax)</label>
+                      <div class="quote-price-row">
+                        <div class="input-wrap">
+                          <span class="input-prefix js-currency-symbol">$</span>
+                          <input
+                            id="q-price"
+                            class="input has-prefix input-price-hero tabular"
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <button
+                          id="btn-apply-recommended"
+                          class="btn btn-mint"
+                          type="button"
+                          title="Set quoted price to the calculated recommended price"
+                        >
+                          Use Recommended
+                        </button>
+                      </div>
+                      <span class="field-hint">
+                        The price you plan to charge before any separately collected sales tax.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h4 class="form-section-title">Labour &amp; Travel</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="q-labour-hours">Labour hours</label>
+                      <div class="input-wrap">
+                        <input
+                          id="q-labour-hours"
+                          class="input has-suffix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0"
+                        />
+                        <span class="input-suffix">hrs</span>
+                      </div>
+                      <span class="field-hint">Total labour hours (all workers combined).</span>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="q-labour-rate">Labour cost / hour</label>
+                        <button
+                          id="pill-q-labour-rate"
+                          class="default-pill"
+                          type="button"
+                          title="Click to reset to default rate"
+                        >
+                          Default
+                        </button>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-labour-rate"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Include owner's labour cost.</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="q-travel-dist">
+                        Travel distance (<span class="js-distance-unit">km</span>)
+                      </label>
+                      <div class="input-wrap">
+                        <input
+                          id="q-travel-dist"
+                          class="input has-suffix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0"
+                        />
+                        <span class="input-suffix js-distance-unit">km</span>
+                      </div>
+                      <span class="field-hint">Total round-trip distance.</span>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="q-travel-rate">
+                          Travel cost / <span class="js-distance-unit">km</span>
+                        </label>
+                        <button
+                          id="pill-q-travel-rate"
+                          class="default-pill"
+                          type="button"
+                          title="Click to reset to default travel rate"
+                        >
+                          Default
+                        </button>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-travel-rate"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Vehicle operating cost per <span class="js-distance-unit">km</span>.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h4 class="form-section-title">Direct Costs &amp; Overhead</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="q-materials">Materials &amp; supplies</label>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-materials"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Solutions, consumables, disposables.</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="q-equipment">Equipment / rental</label>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-equipment"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Rentals and job-specific gear costs.</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="q-subcontractor">Subcontractor costs</label>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-subcontractor"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Outsourced labour or specialist fees.</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="q-other">Other direct costs</label>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-other"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Disposal, parking, permits, payment fees.</span>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="q-overhead">Allocated overhead</label>
+                        <button
+                          id="pill-q-overhead"
+                          class="default-pill"
+                          type="button"
+                          title="Click to reset to default overhead"
+                        >
+                          Default
+                        </button>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-currency-symbol">$</span>
+                        <input
+                          id="q-overhead"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <span class="field-hint">Share of insurance, software, admin.</span>
+                    </div>
+
+                    <div class="field field-full">
+                      <label for="q-notes">Scope / customer quote notes (optional)</label>
+                      <textarea
+                        id="q-notes"
+                        class="textarea"
+                        placeholder="Describe scope of work or site notes (included on customer quote if entered)."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Live Price Check Summary -->
+          <aside class="summary-card sticky-summary" aria-label="Live price check">
+            <div class="summary-hero">
+              <div class="summary-hero-top">
+                <span class="summary-eyebrow">Recommended Price</span>
+                <span id="q-status-badge" class="status-badge check_inputs">Check inputs</span>
+              </div>
+              <div class="summary-primary-figure">
+                <span id="q-recommended-price" class="summary-big-value tabular">—</span>
+                <span id="q-target-margin-label" class="field-hint tabular">at 40.0% margin</span>
+              </div>
+              <div id="q-diff-callout" class="summary-sub-metric tabular">
+                Enter your costs and quoted price to evaluate margin.
+              </div>
+            </div>
+
+            <div class="summary-body">
+              <!-- Margin vs Target Visual Meter -->
+              <div class="margin-meter">
+                <div class="margin-meter-labels">
+                  <span>Expected margin: <strong id="q-expected-margin-top" class="tabular">—</strong></span>
+                  <span id="q-margin-vs-goal" class="tabular">—</span>
+                </div>
+                <div class="margin-track" role="img" aria-label="Expected margin relative to target margin">
+                  <div id="q-margin-fill" class="margin-fill" style="width: 0%"></div>
+                  <div id="q-margin-target-marker" class="margin-target-marker" style="left: 40%" title="Target margin"></div>
+                </div>
+              </div>
+
+              <!-- Cost Composition Bar -->
+              <div class="cost-bar-wrap">
+                <div class="margin-meter-labels">
+                  <span>Cost breakdown</span>
+                  <strong id="q-total-cost-top" class="tabular">—</strong>
+                </div>
+                <div class="cost-bar-track" aria-hidden="true">
+                  <div id="seg-q-labour" class="cost-seg labour" style="width: 0%"></div>
+                  <div id="seg-q-materials" class="cost-seg materials" style="width: 0%"></div>
+                  <div id="seg-q-travel" class="cost-seg travel" style="width: 0%"></div>
+                  <div id="seg-q-direct" class="cost-seg direct" style="width: 0%"></div>
+                  <div id="seg-q-overhead" class="cost-seg overhead" style="width: 0%"></div>
+                </div>
+                <div id="q-cost-legend" class="cost-legend tabular"></div>
+              </div>
+
+              <!-- Price Check Rows -->
+              <ul class="metric-list">
+                <li class="metric-row is-highlight">
+                  <span class="metric-label">Expected profit</span>
+                  <span id="q-expected-profit" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label">Total estimated cost (break-even)</span>
+                  <span id="q-break-even" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label">Difference from recommended</span>
+                  <span id="q-diff-recommended" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label" id="q-tax-row-label">Quoted price incl. tax</span>
+                  <span id="q-price-incl-tax" class="metric-value tabular">—</span>
+                </li>
+              </ul>
+
+              <div class="summary-actions">
+                <button id="btn-save-quote" class="btn btn-primary" type="button">
+                  Save Quote
+                </button>
+                <div class="summary-actions-row">
+                  <button id="btn-preview-quote" class="btn btn-secondary" type="button">
+                    Customer Quote
+                  </button>
+                  <button id="btn-go-actuals" class="btn btn-mint" type="button">
+                    Record Actuals →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 2: RECORD ACTUALS ==================== -->
+      <section id="view-actuals" class="view-panel" role="tabpanel" aria-labelledby="tab-actuals" hidden>
+        <div class="view-header">
+          <div class="view-heading-group">
+            <span class="view-step">Step 2 · Completed Job Results</span>
+            <h2 class="view-title">Record Actuals &amp; Compare</h2>
+            <p class="view-subtitle">
+              Enter what the completed job really cost and see how actual profit compared to your estimate.
+            </p>
+          </div>
+          <div class="view-toolbar">
+            <button id="btn-actuals-edit-quote" class="btn btn-secondary" type="button">
+              Edit Original Quote
+            </button>
+          </div>
+        </div>
+
+        <div class="job-selector-bar">
+          <label for="actual-job-select">Select Job:</label>
+          <select id="actual-job-select" class="select"></select>
+          <span id="actual-job-state-badge" class="status-badge quoted">Open quote</span>
+        </div>
+
+        <div id="actuals-empty" class="card" hidden>
+          <div class="empty-state">
+            <h3>No saved jobs yet</h3>
+            <p>Save a quote on the Price a Job screen first, then return here once the work is complete.</p>
+            <button id="btn-actuals-start-quote" class="btn btn-primary" type="button">
+              Price a Job
+            </button>
+          </div>
+        </div>
+
+        <div id="actuals-workspace" class="workspace-grid">
+          <!-- Left: Actual Inputs -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Completed Job Actuals</h3>
+              <button id="btn-reset-actuals-to-est" class="btn btn-ghost btn-sm" type="button">
+                Reset to Estimate
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="actuals-prefill-notice" class="info-callout" hidden>
+                Pre-filled from your original quote. Adjust any hours, materials, or travel that changed on site, then click <strong>Save Completed Job</strong>.
+              </div>
+              <div id="actuals-validation-alert" class="validation-alert" role="alert" hidden>
+                Values cannot be negative. Enter 0 or a positive number for highlighted fields.
+              </div>
+
+              <form id="actuals-form" novalidate>
+                <div class="form-section">
+                  <h4 class="form-section-title">Revenue &amp; Date</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="a-date">Completion date</label>
+                      <input id="a-date" class="input tabular" type="date" />
+                    </div>
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-price">Actual selling price (excl. tax)</label>
+                        <span id="ref-a-price" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input
+                          id="a-price"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h4 class="form-section-title">Actual Labour &amp; Travel</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-labour-hours">Actual labour hours</label>
+                        <span id="ref-a-labour-hours" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <input
+                          id="a-labour-hours"
+                          class="input has-suffix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                        />
+                        <span class="input-suffix">hrs</span>
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-labour-rate">Actual labour hourly cost</label>
+                        <span id="ref-a-labour-rate" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input
+                          id="a-labour-rate"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-travel-dist">
+                          Actual travel (<span class="js-actual-unit">km</span>)
+                        </label>
+                        <span id="ref-a-travel-dist" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <input
+                          id="a-travel-dist"
+                          class="input has-suffix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                        />
+                        <span class="input-suffix js-actual-unit">km</span>
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-travel-rate">
+                          Travel rate / <span class="js-actual-unit">km</span>
+                        </label>
+                        <span id="ref-a-travel-rate" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input
+                          id="a-travel-rate"
+                          class="input has-prefix tabular"
+                          type="number"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h4 class="form-section-title">Actual Direct Costs &amp; Overhead</h4>
+                  <div class="field-grid">
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-materials">Actual materials</label>
+                        <span id="ref-a-materials" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input id="a-materials" class="input has-prefix tabular" type="number" min="0" step="any" />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-equipment">Actual equipment / rental</label>
+                        <span id="ref-a-equipment" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input id="a-equipment" class="input has-prefix tabular" type="number" min="0" step="any" />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-subcontractor">Actual subcontractor</label>
+                        <span id="ref-a-subcontractor" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input id="a-subcontractor" class="input has-prefix tabular" type="number" min="0" step="any" />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-other">Other job expenses</label>
+                        <span id="ref-a-other" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input id="a-other" class="input has-prefix tabular" type="number" min="0" step="any" />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <div class="field-label-row">
+                        <label for="a-overhead">Allocated overhead</label>
+                        <span id="ref-a-overhead" class="field-estimate-ref tabular"></span>
+                      </div>
+                      <div class="input-wrap">
+                        <span class="input-prefix js-actual-currency">$</span>
+                        <input id="a-overhead" class="input has-prefix tabular" type="number" min="0" step="any" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Actual Results & Variance Panel -->
+          <aside class="summary-card sticky-summary" aria-label="Actual profit and variance">
+            <div class="summary-hero">
+              <div class="summary-hero-top">
+                <span class="summary-eyebrow">Actual Job Profit</span>
+                <span id="a-status-badge" class="status-badge check_inputs">—</span>
+              </div>
+              <div class="summary-primary-figure">
+                <span id="a-actual-profit" class="summary-big-value tabular">—</span>
+                <span id="a-actual-margin" class="field-hint tabular">—</span>
+              </div>
+              <div id="a-variance-callout" class="summary-sub-metric tabular">—</div>
+            </div>
+
+            <div class="summary-body">
+              <ul class="metric-list" style="margin-bottom: var(--space-5)">
+                <li class="metric-row is-highlight">
+                  <span class="metric-label">Profit variance (actual − est.)</span>
+                  <span id="a-profit-variance" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label">Actual total cost</span>
+                  <span id="a-total-cost" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label">Estimated profit</span>
+                  <span id="a-est-profit" class="metric-value tabular">—</span>
+                </li>
+                <li class="metric-row">
+                  <span class="metric-label">Actual price vs. recommended</span>
+                  <span id="a-price-vs-rec" class="metric-value tabular">—</span>
+                </li>
+              </ul>
+
+              <h4 class="form-section-title">Cost Variance Breakdown</h4>
+              <table class="variance-table tabular">
+                <thead>
+                  <tr>
+                    <th>Cost item</th>
+                    <th class="num">Est.</th>
+                    <th class="num">Actual</th>
+                    <th class="num">Diff</th>
+                  </tr>
+                </thead>
+                <tbody id="a-variance-tbody"></tbody>
+              </table>
+
+              <div class="summary-actions">
+                <button id="btn-save-actuals" class="btn btn-primary" type="button">
+                  Save Completed Job
+                </button>
+                <button id="btn-actuals-to-log" class="btn btn-secondary" type="button">
+                  View Job Log
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: JOB LOG ==================== -->
+      <section id="view-log" class="view-panel" role="tabpanel" aria-labelledby="tab-log" hidden>
+        <div class="view-header">
+          <div class="view-heading-group">
+            <span class="view-step">Step 3 · Performance Ledger</span>
+            <h2 class="view-title">Job Log</h2>
+            <p class="view-subtitle">
+              Track unlimited quotes and completed jobs, monitor margins, and export your records anytime.
+            </p>
+          </div>
+          <div class="view-toolbar">
+            <button id="btn-export-csv" class="btn btn-secondary" type="button">
+              Export CSV
+            </button>
+            <button id="btn-export-json" class="btn btn-secondary" type="button">
+              Backup JSON
+            </button>
+            <button id="btn-import-json" class="btn btn-ghost" type="button">
+              Restore JSON
+            </button>
+            <input id="input-import-json" type="file" accept=".json,application/json" hidden />
+            <button id="btn-new-from-log" class="btn btn-primary" type="button">
+              + Price a Job
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary KPI Strip (mirrors JOB LOG rows 208-213) -->
+        <div class="kpi-strip tabular">
+          <div class="kpi-tile">
+            <span class="kpi-label">Completed jobs</span>
+            <span id="kpi-completed" class="kpi-value">0</span>
+          </div>
+          <div class="kpi-tile">
+            <span class="kpi-label">Revenue (excl. tax)</span>
+            <span id="kpi-revenue" class="kpi-value">—</span>
+          </div>
+          <div class="kpi-tile">
+            <span class="kpi-label">Total job cost</span>
+            <span id="kpi-cost" class="kpi-value">—</span>
+          </div>
+          <div class="kpi-tile is-profit">
+            <span class="kpi-label">Total profit</span>
+            <span id="kpi-profit" class="kpi-value">—</span>
+          </div>
+          <div class="kpi-tile">
+            <span class="kpi-label">Overall margin</span>
+            <span id="kpi-margin" class="kpi-value">—</span>
+          </div>
+          <div class="kpi-tile">
+            <span class="kpi-label">Loss-making jobs</span>
+            <span id="kpi-losses" class="kpi-value">0</span>
+          </div>
+        </div>
+
+        <div id="log-mixed-currency-note" class="warning-callout" hidden>
+          Completed jobs use multiple currencies. Select a currency below to view exact financial totals.
+        </div>
+
+        <div class="card">
+          <div class="log-controls">
+            <div class="log-filters">
+              <input
+                id="log-search"
+                class="input log-search"
+                type="search"
+                placeholder="Search customer, service, notes..."
+                aria-label="Search jobs"
+              />
+              <select id="log-status-filter" class="select log-select" aria-label="Filter by result">
+                <option value="all">All statuses</option>
+                <option value="quoted">Open quotes</option>
+                <option value="on_target">On target</option>
+                <option value="below_target">Below target</option>
+                <option value="loss">Loss</option>
+              </select>
+              <select id="log-service-filter" class="select log-select" aria-label="Filter by service type">
+                <option value="all">All services</option>
+              </select>
+              <select id="log-currency-filter" class="select log-select" aria-label="Filter by currency" hidden>
+                <option value="all">All currencies</option>
+              </select>
+            </div>
+            <span id="log-count-label" class="field-hint tabular">0 jobs shown</span>
+          </div>
+
+          <div class="table-scroll">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Job / Customer</th>
+                  <th>Status</th>
+                  <th class="num">Price / Rev.</th>
+                  <th class="num">Total Cost</th>
+                  <th class="num">Profit</th>
+                  <th class="num">Margin</th>
+                  <th class="num">Variance</th>
+                  <th class="num">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="log-tbody"></tbody>
+            </table>
+          </div>
+
+          <div id="log-empty" class="empty-state" hidden>
+            <h3>No matching jobs</h3>
+            <p>Try adjusting your filters or create a new job estimate to get started.</p>
+            <button id="btn-empty-new-job" class="btn btn-primary" type="button">
+              + Price a Job
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>
+        Private per-account workspaces. Free tier includes 2 saved quotes/month; optional one-time Lifetime Pro unlock — no subscription.
+      </span>
+      <span>
+        Planning estimates only; not accounting, tax, or legal advice.
+      </span>
+    </footer>
+
+    <!-- ==================== SETTINGS SLIDE-OVER DRAWER ==================== -->
+    <div id="settings-overlay" class="overlay" aria-hidden="true">
+      <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="drawer-header">
+          <h2 id="settings-title" class="drawer-title">Business Settings</h2>
+          <button id="btn-close-settings" class="btn btn-ghost btn-sm" type="button" aria-label="Close settings">
+            Close ✕
+          </button>
+        </div>
+
+        <div class="drawer-body">
+          <div class="info-callout">
+            Defaults below apply to <strong>new quotes</strong>. Previously saved jobs retain the exact assumptions snapshotted when they were created.
+          </div>
+
+          <form id="settings-form" novalidate>
+            <div class="form-section">
+              <h3 class="form-section-title">Pricing Assumptions</h3>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="s-labour-rate">Labour cost / hour</label>
+                  <div class="input-wrap">
+                    <span class="input-prefix js-settings-currency">$</span>
+                    <input id="s-labour-rate" class="input has-prefix tabular" type="number" min="0" step="any" />
+                  </div>
+                  <span class="field-hint">Total cost per working hour, incl. owner's labour.</span>
+                </div>
+
+                <div class="field">
+                  <label for="s-target-margin">Desired profit margin (%)</label>
+                  <div class="input-wrap">
+                    <input
+                      id="s-target-margin"
+                      class="input has-suffix tabular"
+                      type="number"
+                      min="0"
+                      max="95"
+                      step="any"
+                    />
+                    <span class="input-suffix">%</span>
+                  </div>
+                  <span class="field-hint">Profit / revenue (max 95%). Not markup.</span>
+                </div>
+
+                <div class="field">
+                  <label for="s-overhead">Overhead per job</label>
+                  <div class="input-wrap">
+                    <span class="input-prefix js-settings-currency">$</span>
+                    <input id="s-overhead" class="input has-prefix tabular" type="number" min="0" step="any" />
+                  </div>
+                  <span class="field-hint">Rent, insurance, software, admin per job.</span>
+                </div>
+
+                <div class="field">
+                  <label for="s-travel-rate">Default travel rate</label>
+                  <div class="input-wrap">
+                    <span class="input-prefix js-settings-currency">$</span>
+                    <input id="s-travel-rate" class="input has-prefix tabular" type="number" min="0" step="any" />
+                  </div>
+                  <span class="field-hint">Vehicle operating cost per <span id="s-unit-hint">km</span>.</span>
+                </div>
+
+                <div class="field">
+                  <label for="s-tax-rate">Job tax rate (% — informational)</label>
+                  <div class="input-wrap">
+                    <input
+                      id="s-tax-rate"
+                      class="input has-suffix tabular"
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="any"
+                    />
+                    <span class="input-suffix">%</span>
+                  </div>
+                  <span class="field-hint">Shown on tax-inclusive quotes only; excluded from profit.</span>
+                </div>
+
+                <div class="field">
+                  <label for="s-currency">Currency</label>
+                  <select id="s-currency" class="select"></select>
+                </div>
+
+                <div class="field">
+                  <label for="s-distance-unit">Distance unit</label>
+                  <select id="s-distance-unit" class="select">
+                    <option value="km">Kilometres (km)</option>
+                    <option value="mi">Miles (mi)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Customer Quote Details (Optional)</h3>
+              <div class="field-grid field-grid-single">
+                <div class="field">
+                  <label for="s-biz-name">Business name</label>
+                  <input
+                    id="s-biz-name"
+                    class="input"
+                    type="text"
+                    placeholder="e.g., Greenline Exterior Services"
+                  />
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="s-biz-phone">Phone</label>
+                    <input id="s-biz-phone" class="input" type="tel" placeholder="(555) 234-5678" />
+                  </div>
+                  <div class="field">
+                    <label for="s-biz-email">Email</label>
+                    <input id="s-biz-email" class="input" type="email" placeholder="quotes@yourbusiness.com" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="s-quote-validity">Quote validity label</label>
+                  <input id="s-quote-validity" class="input" type="text" placeholder="Valid for 30 days" />
+                </div>
+                <div class="field">
+                  <label for="s-quote-footer">Quote footer note</label>
+                  <textarea id="s-quote-footer" class="textarea"></textarea>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="drawer-footer">
+          <button id="btn-reset-settings" class="btn btn-ghost btn-sm" type="button">
+            Reset Defaults
+          </button>
+          <button id="btn-save-settings" class="btn btn-primary" type="button">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== QUICK START GUIDE DRAWER ==================== -->
+    <div id="guide-overlay" class="overlay" aria-hidden="true">
+      <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+        <div class="drawer-header">
+          <h2 id="guide-title" class="drawer-title">Quick Start Guide</h2>
+          <button id="btn-close-guide" class="btn btn-ghost btn-sm" type="button" aria-label="Close guide">
+            Close ✕
+          </button>
+        </div>
+        <div class="drawer-body">
+          <ol class="guide-steps">
+            <li class="guide-step">
+              <span class="guide-num">1</span>
+              <div>
+                <strong>Set Up Business Defaults</strong>
+                <p>Open <em>Settings</em> to set your hourly labour cost, desired profit margin, per-job overhead, travel rate, currency, and optional contact details for quotes.</p>
+              </div>
+            </li>
+            <li class="guide-step">
+              <span class="guide-num">2</span>
+              <div>
+                <strong>Estimate &amp; Price a Job</strong>
+                <p>Enter labour time, materials, travel, equipment, and overhead on <em>Price a Job</em>. Review the recommended selling price, expected profit, and margin status.</p>
+              </div>
+            </li>
+            <li class="guide-step">
+              <span class="guide-num">3</span>
+              <div>
+                <strong>Send a Clean Customer Quote</strong>
+                <p>Click <em>Customer Quote</em> to copy a ready-to-text summary or print/save a PDF that hides your internal costs and profit margins.</p>
+              </div>
+            </li>
+            <li class="guide-step">
+              <span class="guide-num">4</span>
+              <div>
+                <strong>Record Actual Costs</strong>
+                <p>Once the job is finished, click <em>Record Actuals</em>. Your estimate is pre-filled so you only adjust what changed and immediately see profit variance.</p>
+              </div>
+            </li>
+            <li class="guide-step">
+              <span class="guide-num">5</span>
+              <div>
+                <strong>Track &amp; Export in Job Log</strong>
+                <p>Review overall revenue, costs, profit, and margin across unlimited jobs. Export to CSV or save a JSON backup anytime.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="margin-example-box">
+            <h4>Margin vs. Markup — Why it matters</h4>
+            <p>
+              <strong>Margin = profit ÷ selling price.</strong> Markup = profit ÷ cost. A 40% margin requires dividing cost by <code>(1 − 0.40)</code>:
+            </p>
+            <ul class="metric-list tabular">
+              <li class="metric-row">
+                <span class="metric-label">Total job cost</span>
+                <span class="metric-value">$150.00</span>
+              </li>
+              <li class="metric-row">
+                <span class="metric-label">Required price for 40% margin ($150 ÷ 0.60)</span>
+                <span class="metric-value">$250.00</span>
+              </li>
+              <li class="metric-row">
+                <span class="metric-label">Gross profit</span>
+                <span class="metric-value val-positive">$100.00 (40.0%)</span>
+              </li>
+            </ul>
+          </div>
+
+          <h4 class="form-section-title">Important Notes</h4>
+          <p class="field-hint" style="margin-bottom: 0.6rem">
+            • <strong>Your time counts:</strong> Include the owner's labour cost per hour even if you don't pay yourself a formal wage.
+          </p>
+          <p class="field-hint" style="margin-bottom: 0.6rem">
+            • <strong>Sales tax:</strong> Enter selling prices excluding separately charged sales tax. Tax-inclusive totals are informational and not counted as profit.
+          </p>
+          <p class="field-hint">
+            • <strong>Planning tool:</strong> Results depend on your real costs and are not accounting, tax, or legal advice.
+          </p>
+        </div>
+        <div class="drawer-footer">
+          <span class="field-hint">All data stays private on this device.</span>
+          <button id="btn-guide-done" class="btn btn-primary" type="button">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CUSTOMER QUOTE MODAL ==================== -->
+    <div id="quote-modal-overlay" class="overlay is-modal" aria-hidden="true">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="quote-modal-title">
+        <div class="drawer-header">
+          <h2 id="quote-modal-title" class="drawer-title">Customer Quote Preview</h2>
+          <button id="btn-close-quote-modal" class="btn btn-ghost btn-sm" type="button" aria-label="Close quote preview">
+            Close ✕
+          </button>
+        </div>
+        <div class="drawer-body">
+          <p class="field-hint no-print" style="margin-top: 0; margin-bottom: var(--space-3)">
+            Internal costs, hourly rates, and profit margins are hidden from this customer-facing view.
+          </p>
+          <div id="quote-modal-warning" class="warning-callout no-print" hidden>
+            No quoted selling price entered yet. Enter a price (or click <strong>Use Recommended</strong>) before copying or printing this quote.
+          </div>
+          <div id="customer-quote-sheet" class="quote-sheet"></div>
+          <p id="quote-branding-hint" class="field-hint no-print" style="margin-top: var(--space-3); margin-bottom: 0" hidden>
+            Tip: Add your business name, phone, or email in <strong>Settings</strong> to brand printed quotes.
+          </p>
+          <p id="quote-sandbox-hint" class="field-hint no-print" style="margin-top: var(--space-2); margin-bottom: 0" hidden>
+            Note: Embedded preview panes block browser downloads and print dialogs. <strong>Download PDF</strong> and <strong>Print</strong> work normally when opened in a regular browser tab or deployed live.
+          </p>
+          <div id="quote-copy-fallback" class="no-print" style="margin-top: var(--space-3)" hidden>
+            <label for="quote-copy-textarea" class="field-hint" style="display: block; margin-bottom: 0.3rem">
+              Copy quote text (Ctrl+C / Cmd+C):
+            </label>
+            <textarea id="quote-copy-textarea" class="textarea" readonly rows="6"></textarea>
+          </div>
+        </div>
+        <div class="drawer-footer">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap">
+            <button id="btn-copy-quote" class="btn btn-secondary" type="button">
+              Copy Text
+            </button>
+            <button id="btn-print-quote" class="btn btn-ghost" type="button">
+              Print
+            </button>
+          </div>
+          <button id="btn-download-pdf" class="btn btn-primary" type="button">
+            Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== AUTH MODAL (SIGN UP / LOG IN) ==================== -->
+    <div id="auth-modal-overlay" class="overlay is-modal" aria-hidden="true">
+      <div class="modal-dialog modal-compact" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="drawer-header">
+          <h2 id="auth-modal-title" class="drawer-title">Create Free Account</h2>
+          <button id="btn-close-auth-modal" class="btn btn-ghost btn-sm" type="button" aria-label="Close sign in">
+            Close ✕
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div id="auth-context-banner" class="info-callout" hidden>
+            Create a free account (or log in) to save this quote. Free accounts include <strong><span class="js-free-limit">2</span> saved quotes per month</strong>.
+          </div>
+
+          <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+            <button id="auth-tab-signup" class="auth-tab" type="button" role="tab" aria-selected="true" data-mode="signup">
+              Create Free Account
+            </button>
+            <button id="auth-tab-signin" class="auth-tab" type="button" role="tab" aria-selected="false" data-mode="signin">
+              Log In
+            </button>
+          </div>
+
+          <div id="auth-error-alert" class="validation-alert" role="alert" hidden></div>
+          <div id="auth-info-alert" class="info-callout" role="status" hidden></div>
+
+          <form id="auth-form" novalidate>
+            <div class="field-grid field-grid-single">
+              <div class="field">
+                <label for="auth-email">Email address</label>
+                <input
+                  id="auth-email"
+                  class="input"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="you@yourbusiness.com"
+                  required
+                />
+              </div>
+              <div id="auth-password-field" class="field">
+                <label for="auth-password">Password</label>
+                <input
+                  id="auth-password"
+                  class="input"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="At least 6 characters"
+                  minlength="6"
+                />
+              </div>
+              <div class="auth-form-actions">
+                <button id="btn-auth-submit" class="btn btn-primary" type="submit" style="width: 100%">
+                  Create Free Account
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div class="auth-footer-links">
+            <button id="btn-auth-forgot" class="btn btn-ghost btn-sm" type="button">
+              Forgot password?
+            </button>
+            <button id="btn-auth-back-signin" class="btn btn-ghost btn-sm" type="button" hidden>
+              ← Back to Log In
+            </button>
+          </div>
+
+          <p id="auth-mode-note" class="field-hint auth-mode-note" hidden>
+            <strong>Local Multi-User Test Mode:</strong> Accounts are isolated per email inside this browser so you can test separate trades (e.g., landscaper vs. cleaner) before connecting Supabase.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== UPGRADE TO LIFETIME PRO MODAL ==================== -->
+    <div id="upgrade-modal-overlay" class="overlay is-modal" aria-hidden="true">
+      <div class="modal-dialog modal-compact" role="dialog" aria-modal="true" aria-labelledby="upgrade-modal-title">
+        <div class="drawer-header">
+          <h2 id="upgrade-modal-title" class="drawer-title">Unlock Unlimited Quotes Forever</h2>
+          <button id="btn-close-upgrade-modal" class="btn btn-ghost btn-sm" type="button" aria-label="Close upgrade">
+            Close ✕
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div id="upgrade-usage-banner" class="warning-callout tabular">
+            You have used <strong>2 of 2</strong> free saved quotes for this month.
+          </div>
+
+          <div class="upgrade-price-card">
+            <div class="upgrade-price-top">
+              <span class="upgrade-price-amount tabular js-lifetime-price">$29</span>
+              <span class="upgrade-price-cadence">one-time payment · no subscription</span>
+            </div>
+            <ul class="upgrade-benefits">
+              <li>Save unlimited quotes and completed jobs forever</li>
+              <li>Isolated private workspace synced across phone &amp; desktop</li>
+              <li>Edit quotes, track actual profit variance, and print customer PDFs</li>
+              <li>Your existing saved jobs always stay accessible and exportable</li>
+            </ul>
+          </div>
+
+          <p id="upgrade-local-note" class="field-hint" style="margin-top: var(--space-3); margin-bottom: 0" hidden>
+            <strong>Local Multi-User Test Mode:</strong> Click below to simulate a verified one-time Lemon Squeezy unlock for this account only.
+          </p>
+        </div>
+        <div class="drawer-footer">
+          <button id="btn-upgrade-refresh" class="btn btn-secondary btn-sm" type="button" hidden>
+            Refresh Plan Status
+          </button>
+          <button id="btn-upgrade-checkout" class="btn btn-primary" type="button" style="flex: 1">
+            Unlock Unlimited Forever (<span class="js-lifetime-price">$29</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Region -->
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
